@@ -1,0 +1,142 @@
+<!doctype html>
+
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>Chat GPT in Java!</title>
+    <meta name="description" content="The HTML5 Herald">
+    <meta name="author" content="kokaneka">
+    <style>
+        body {
+            font-family: sans-serif;
+            margin: 0;
+
+        }
+        .chat-bubble {
+            background-color: #eee;
+            border-radius: 5px;
+            padding: 10px;
+            margin: 10px;
+            display: inline-block;
+        }
+        .chat-container {
+            background-color: #ddd;
+            padding: 10px;
+            display: flex;
+            flex-direction: column-reverse;
+        }
+    </style>
+</head>
+
+<body>
+<div id="place-app"> </div>
+<script src="https://unpkg.com/babel-standalone@6/babel.min.js"></script>
+<script src="https://unpkg.com/react@16/umd/react.development.js" crossorigin></script>
+<script src="https://unpkg.com/react-dom@16/umd/react-dom.development.js" crossorigin></script>
+<script src="https://unpkg.com/@mui/material@5.3.1/umd/material-ui.development.js" crossorigin></script>
+<script type="text/babel">
+    function ChatBubble(props) {
+        return (
+                <div className="chat-bubble">
+                    {props.message}
+                </div>
+        );
+    }
+    function ChatContainer(props) {
+        const [name, setName] = React.useState(localStorage.getItem('name') || '');
+        const [message, setMessage] = React.useState('');
+        const [messages, setMessages] = React.useState([]);
+        const [socketConnected, setSocketConnected] = React.useState(false)
+        const [socket, setSocket] = React.useState(undefined)
+
+        React.useEffect(() => {
+            if (name) {
+                localStorage.setItem('name', name);
+            }
+        }, [name]);
+
+        React.useEffect(() => {
+            if (!socketConnected) {
+                const webSocket = new WebSocket('ws://localhost:8080/chat');
+                webSocket.onopen = () => {
+                    setSocketConnected(true);
+                    setSocket(webSocket);
+                    console.log(`Connected to web socket!`, webSocket);
+                };
+                webSocket.onmessage = (event) => {
+                    setMessages((messages) => [...messages, event.data]);
+                };
+                webSocket.onclose = () => {
+                    setSocketConnected(false);
+                    setSocket(undefined);
+                    console.log(`Disconnected from web socket!`);
+                };
+            }
+        }, []);
+
+        function send() {
+            if (socket && message) {
+                console.log(`Sending message: ${message}`);
+                socket.send(message);
+            }
+            setMessage('');
+        }
+
+        return (
+            <React.Fragment>
+                <div className="chat-container">
+                    {messages.map((message, index) => {
+                        return <ChatBubble key={index} message={message}/>
+                    })}
+                </div>
+                <div>
+                    <MaterialUI.TextField
+                        disabled={!socketConnected}
+                        placeholder="Enter your name here"
+                        variant={"standard"}
+                        value={name}
+                        onChange={(event) => {
+                            setName(event.target.value)
+                        }}
+                    />
+                    <MaterialUI.TextField
+                        disabled={!socketConnected}
+                        variant="standard"
+                        placeholder="Enter your message here"
+                            /*On enter call the send function*/
+                            /*On change update the state
+                             */
+                        value={message}
+                        onChange={(event) => {
+                            setMessage(event.target.value)
+                        }}
+                        onKeyPress={(event) => {
+                            if (event.key === 'Enter') {
+                                send();
+                            }
+                        }}
+                    />
+                    <MaterialUI.Button disabled={!socketConnected} onClick={()=>send()}>Send</MaterialUI.Button>
+                </div>
+            </React.Fragment>
+        );
+    }
+    function App(props) {
+        return <div>
+            <MaterialUI.AppBar position="static">
+                <MaterialUI.Toolbar>
+                    <MaterialUI.Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
+                        Chat GPT + Web Sockets with Quarkus on Java!
+                    </MaterialUI.Typography>
+                </MaterialUI.Toolbar>
+            </MaterialUI.AppBar>
+            <ChatContainer/>
+        </div>;
+    }
+    ReactDOM.render(
+            App(),
+            document.getElementById('place-app')
+    );
+</script>
+</body>
+</html>

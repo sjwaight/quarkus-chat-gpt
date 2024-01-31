@@ -13,27 +13,30 @@ import java.io.IOException;
 
 import static java.util.Objects.requireNonNull;
 
-@ServerEndpoint("/start-websocket/{name}")
+@ServerEndpoint("/chat")
 @ApplicationScoped
 public class StartWebSocket {
 
     @OnOpen
-    public void onOpen(Session session, @PathParam("name") String name) {
-        System.out.println("onOpen> " + name);
+    public void onOpen(Session session) {
+        System.out.println("onOpen> ");
     }
 
     @OnClose
-    public void onClose(Session session, @PathParam("name") String name) {
-        System.out.println("onClose> " + name);
+    public void onClose(Session session) {
+        System.out.println("onClose> ");
     }
 
     @OnError
-    public void onError(Session session, @PathParam("name") String name, Throwable throwable) {
-        System.out.println("onError> " + name + ": " + throwable);
+    public void onError(Session session, Throwable throwable) {
+        System.out.println("onError> " + ": " + throwable);
     }
 
     @OnMessage
-    public void onMessage(String message, @PathParam("name") String name) {
-        System.out.println("onMessage> " + name + ": " + message);
+    public void onMessage(Session session, String message) {
+        System.out.println("onMessage> " + ": " + message);
+        session.getOpenSessions().forEach(s -> {
+            s.getAsyncRemote().sendText(message);
+        });
     }
 }
