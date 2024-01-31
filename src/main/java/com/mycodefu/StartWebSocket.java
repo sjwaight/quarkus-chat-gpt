@@ -20,6 +20,7 @@ public class StartWebSocket {
     @OnOpen
     public void onOpen(Session session) {
         System.out.println("onOpen> ");
+        session.getAsyncRemote().sendText("Ho there!");
     }
 
     @OnClose

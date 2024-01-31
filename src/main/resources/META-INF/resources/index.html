@@ -12,6 +12,13 @@
             margin: 0;
 
         }
+
+        .app-container {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+
         .chat-bubble {
             background-color: #eee;
             border-radius: 5px;
@@ -19,17 +26,25 @@
             margin: 10px;
             display: inline-block;
         }
+
         .chat-container {
             background-color: #ddd;
             padding: 10px;
             display: flex;
             flex-direction: column-reverse;
         }
+
+        .chat-input {
+            border: 1px solid #ddd;
+            padding: 10px;
+            display: flex;
+        }
+
     </style>
 </head>
 
 <body>
-<div id="place-app"> </div>
+<div id="place-app"></div>
 <script src="https://unpkg.com/babel-standalone@6/babel.min.js"></script>
 <script src="https://unpkg.com/react@16/umd/react.development.js" crossorigin></script>
 <script src="https://unpkg.com/react-dom@16/umd/react-dom.development.js" crossorigin></script>
@@ -37,11 +52,12 @@
 <script type="text/babel">
     function ChatBubble(props) {
         return (
-                <div className="chat-bubble">
-                    {props.message}
-                </div>
+            <div className="chat-bubble">
+                {props.message}
+            </div>
         );
     }
+
     function ChatContainer(props) {
         const [name, setName] = React.useState(localStorage.getItem('name') || '');
         const [message, setMessage] = React.useState('');
@@ -64,7 +80,7 @@
                     console.log(`Connected to web socket!`, webSocket);
                 };
                 webSocket.onmessage = (event) => {
-                    setMessages((messages) => [...messages, event.data]);
+                    setMessages((messages) => [event.data, ...messages]);
                 };
                 webSocket.onclose = () => {
                     setSocketConnected(false);
@@ -83,25 +99,35 @@
         }
 
         return (
-            <React.Fragment>
-                <div className="chat-container">
+            <MaterialUI.Paper className="app-container">
+                <MaterialUI.AppBar position="static">
+                    <MaterialUI.Toolbar>
+                        <MaterialUI.Typography variant="h6" component="div" sx={{flexGrow: 1}}>
+                            Chat GPT + Web Sockets with Quarkus on Java!
+                        </MaterialUI.Typography>
+                        <MaterialUI.TextField
+                            disabled={!socketConnected}
+                            placeholder="Enter your name here"
+                            variant={"standard"}
+                            value={name}
+                            onChange={(event) => {
+                                setName(event.target.value)
+                            }}
+                        />
+                    </MaterialUI.Toolbar>
+                </MaterialUI.AppBar>
+                <MaterialUI.Paper className="chat-container"
+                                  sx={{flexGrow: 1}}
+                >
                     {messages.map((message, index) => {
                         return <ChatBubble key={index} message={message}/>
                     })}
-                </div>
-                <div>
-                    <MaterialUI.TextField
-                        disabled={!socketConnected}
-                        placeholder="Enter your name here"
-                        variant={"standard"}
-                        value={name}
-                        onChange={(event) => {
-                            setName(event.target.value)
-                        }}
-                    />
+                </MaterialUI.Paper>
+                <div className="chat-input">
                     <MaterialUI.TextField
                         disabled={!socketConnected}
                         variant="standard"
+                        sx={{flexGrow: 1}}
                         placeholder="Enter your message here"
                             /*On enter call the send function*/
                             /*On change update the state
@@ -116,26 +142,21 @@
                             }
                         }}
                     />
-                    <MaterialUI.Button disabled={!socketConnected} onClick={()=>send()}>Send</MaterialUI.Button>
+                    <MaterialUI.Button disabled={!socketConnected} onClick={() => send()}>Send</MaterialUI.Button>
                 </div>
-            </React.Fragment>
+            </MaterialUI.Paper>
         );
     }
+
     function App(props) {
         return <div>
-            <MaterialUI.AppBar position="static">
-                <MaterialUI.Toolbar>
-                    <MaterialUI.Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
-                        Chat GPT + Web Sockets with Quarkus on Java!
-                    </MaterialUI.Typography>
-                </MaterialUI.Toolbar>
-            </MaterialUI.AppBar>
             <ChatContainer/>
         </div>;
     }
+
     ReactDOM.render(
-            App(),
-            document.getElementById('place-app')
+        App(),
+        document.getElementById('place-app')
     );
 </script>
 </body>
