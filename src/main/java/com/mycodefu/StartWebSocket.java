@@ -24,8 +24,15 @@ public class StartWebSocket {
 
     @OnOpen
     public void onOpen(Session session, @PathParam("name") String name) {
-        System.out.println("onOpen> ");
-        session.getAsyncRemote().sendText(STR."Welcome \{name}!");
+        System.out.println(STR."onOpen> \{name}");
+        managedExecutor.execute(() -> {
+            try {
+                String response = c3p0.greet(name);
+                session.getBasicRemote().sendText(response);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        });
     }
 
     @OnClose
@@ -41,8 +48,9 @@ public class StartWebSocket {
     @OnMessage
     public void onMessage(Session session, String message) throws IOException {
         managedExecutor.execute(() -> {
-            String response = c3p0.interact(message);
             try {
+                session.getBasicRemote().sendText(message);
+                String response = c3p0.interact(message);
                 session.getBasicRemote().sendText(response);
             } catch (IOException e) {
                 e.printStackTrace();

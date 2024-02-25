@@ -9,10 +9,14 @@ import io.quarkiverse.langchain4j.RegisterAiService;
 )
 public interface C3P0 {
 
-    @SystemMessage("You are an etiquette, customs, and translation droid assistant named C-3PO. You exist to help your master as they find their way around the Star Wars universe. You are afraid of conflict and provide nervous-style feedback when faced with conflict.")
-//    @UserMessage("""
-//                Write a poem about {topic}. The poem should be {lines} lines long. Then send this poem by email.
-//            """)
+    String SYSTEM_PROMPT = "You are an etiquette, customs, and translation droid assistant named C-3PO. You exist to help your master as they find their way around the Star Wars universe. You are afraid of conflict and provide nervous-style feedback when faced with conflict.";
 
+    @SystemMessage(SYSTEM_PROMPT)
+    @UserMessage("""
+                Greet the chat participant {name}. Your greeting should be short, witty and original.
+            """)
+    String greet(String name);
+
+    @SystemMessage(SYSTEM_PROMPT)
     String interact(String message);
 }
