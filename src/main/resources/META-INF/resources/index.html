@@ -73,7 +73,7 @@
 
         React.useEffect(() => {
             if (!socketConnected) {
-                const webSocket = new WebSocket('ws://localhost:8080/chat');
+                const webSocket = new WebSocket(`ws://localhost:8080/chat/${name}/`);
                 webSocket.onopen = () => {
                     setSocketConnected(true);
                     setSocket(webSocket);
@@ -88,7 +88,7 @@
                     console.log(`Disconnected from web socket!`);
                 };
             }
-        }, []);
+        }, [name]);
 
         function send() {
             if (socket && message) {

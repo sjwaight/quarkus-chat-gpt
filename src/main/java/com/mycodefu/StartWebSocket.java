@@ -1,26 +1,31 @@
 package com.mycodefu;
 
+import com.mycodefu.chat.C3P0;
 import jakarta.enterprise.context.ApplicationScoped;
-import jakarta.websocket.EncodeException;
-import jakarta.websocket.OnClose;
-import jakarta.websocket.OnError;
-import jakarta.websocket.OnMessage;
-import jakarta.websocket.OnOpen;
-import jakarta.websocket.Session;
+import jakarta.inject.Inject;
+import jakarta.websocket.*;
 import jakarta.websocket.server.PathParam;
 import jakarta.websocket.server.ServerEndpoint;
+import org.eclipse.microprofile.context.ManagedExecutor;
+
 import java.io.IOException;
 
-import static java.util.Objects.requireNonNull;
+import static java.lang.StringTemplate.STR;
 
-@ServerEndpoint("/chat")
+@ServerEndpoint("/chat/{name}/")
 @ApplicationScoped
 public class StartWebSocket {
 
+    @Inject
+    C3P0 c3p0;
+
+    @Inject
+    ManagedExecutor managedExecutor;
+
     @OnOpen
-    public void onOpen(Session session) {
+    public void onOpen(Session session, @PathParam("name") String name) {
         System.out.println("onOpen> ");
-        session.getAsyncRemote().sendText("Ho there!");
+        session.getAsyncRemote().sendText(STR."Welcome \{name}!");
     }
 
     @OnClose
@@ -34,10 +39,14 @@ public class StartWebSocket {
     }
 
     @OnMessage
-    public void onMessage(Session session, String message) {
-        System.out.println("onMessage> " + ": " + message);
-        session.getOpenSessions().forEach(s -> {
-            s.getAsyncRemote().sendText(message);
+    public void onMessage(Session session, String message) throws IOException {
+        managedExecutor.execute(() -> {
+            String response = c3p0.interact(message);
+            try {
+                session.getBasicRemote().sendText(response);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         });
     }
 }
