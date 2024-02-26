@@ -1,6 +1,7 @@
 package com.mycodefu;
 
 import com.mycodefu.chat.C3P0;
+import io.quarkiverse.langchain4j.ChatMemoryRemover;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.websocket.*;
@@ -27,7 +28,7 @@ public class StartWebSocket {
         System.out.println(STR."onOpen> \{name}");
         managedExecutor.execute(() -> {
             try {
-                String response = c3p0.greet(name);
+                String response = c3p0.greet(session, name);
                 session.getBasicRemote().sendText(response);
             } catch (IOException e) {
                 e.printStackTrace();
@@ -36,8 +37,9 @@ public class StartWebSocket {
     }
 
     @OnClose
-    public void onClose(Session session) {
-        System.out.println("onClose> ");
+    public void onClose(Session session, @PathParam("name") String name) {
+        System.out.println("onClose> " + name);
+        ChatMemoryRemover.remove(c3p0, session);
     }
 
     @OnError
@@ -50,7 +52,7 @@ public class StartWebSocket {
         managedExecutor.execute(() -> {
             try {
                 session.getBasicRemote().sendText(message);
-                String response = c3p0.interact(message);
+                String response = c3p0.interact(session, message);
                 session.getBasicRemote().sendText(response);
             } catch (IOException e) {
                 e.printStackTrace();

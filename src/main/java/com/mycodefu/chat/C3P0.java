@@ -1,7 +1,9 @@
 package com.mycodefu.chat;
 
+import dev.langchain4j.service.MemoryId;
 import dev.langchain4j.service.SystemMessage;
 import dev.langchain4j.service.UserMessage;
+import dev.langchain4j.service.V;
 import io.quarkiverse.langchain4j.RegisterAiService;
 
 @RegisterAiService(
@@ -13,10 +15,10 @@ public interface C3P0 {
 
     @SystemMessage(SYSTEM_PROMPT)
     @UserMessage("""
-                Greet the chat participant {name}. Your greeting should be short, witty and original.
+                Greet the chat participant {name}. Your greeting should be short and witty.
             """)
-    String greet(String name);
+    String greet(@MemoryId Object session, @V("name") String name);
 
     @SystemMessage(SYSTEM_PROMPT)
-    String interact(String message);
+    String interact(@MemoryId Object session, @UserMessage String message);
 }
