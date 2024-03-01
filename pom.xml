@@ -87,6 +87,7 @@
         <configuration>
           <compilerArgs>
             <arg>-parameters</arg>
+            <arg>--enable-preview</arg>
           </compilerArgs>
         </configuration>
       </plugin>
@@ -98,6 +99,7 @@
             <java.util.logging.manager>org.jboss.logmanager.LogManager</java.util.logging.manager>
             <maven.home>${maven.home}</maven.home>
           </systemPropertyVariables>
+          <argLine>--enable-preview</argLine>
         </configuration>
       </plugin>
       <plugin>
@@ -117,15 +119,6 @@
             <java.util.logging.manager>org.jboss.logmanager.LogManager</java.util.logging.manager>
             <maven.home>${maven.home}</maven.home>
           </systemPropertyVariables>
-        </configuration>
-      </plugin>
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-compiler-plugin</artifactId>
-        <configuration>
-          <source>21</source>
-          <target>21</target>
-          <compilerArgs>--enable-preview</compilerArgs>
         </configuration>
       </plugin>
     </plugins>
