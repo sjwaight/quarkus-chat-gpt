@@ -2,11 +2,10 @@ package com.mycodefu;
 
 import com.github.tomakehurst.wiremock.client.WireMock;
 import io.quarkiverse.wiremock.devservice.ConnectWireMock;
-import io.quarkiverse.wiremock.devservice.WireMockConfigKey;
 import io.quarkus.test.common.http.TestHTTPResource;
 import io.quarkus.test.junit.QuarkusTest;
 import jakarta.websocket.*;
-import org.eclipse.microprofile.config.ConfigProvider;
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
@@ -28,7 +27,16 @@ class ChatWebSocketTest {
     WireMock wireMock;
 
     @Test
-    void testMessaging() throws DeploymentException, IOException, InterruptedException {
+    void testMessaging_Greeting() throws DeploymentException, IOException, InterruptedException {
+        wireMockResponse("Hello Leia! I am C3P0, human-cyborg relations. I am fluent in over six million forms of communication.");
+        try (Session session = ContainerProvider.getWebSocketContainer().connectToServer(Client.class, uri)) {
+            Assertions.assertEquals("CONNECT", MESSAGES.poll(10, TimeUnit.SECONDS));
+            Assertions.assertEquals("Hello Leia! I am C3P0, human-cyborg relations. I am fluent in over six million forms of communication.", MESSAGES.poll(10, TimeUnit.SECONDS));
+        }
+    }
+
+    @Test
+    void testMessaging_Conversation() throws DeploymentException, IOException, InterruptedException {
         wireMockResponse("Hello Leia! I am C3P0, human-cyborg relations. I am fluent in over six million forms of communication.");
 
         try (Session session = ContainerProvider.getWebSocketContainer().connectToServer(Client.class, uri)) {
@@ -39,18 +47,46 @@ class ChatWebSocketTest {
 
             wireMockResponse("I don't want to know about them! Hand them to Darth Vader!");
 
-            //Any sent message should be echo'd back
             session.getBasicRemote().sendText("Hello! I have the plans for the death star!");
+
+            //Any sent message should be echo'd back
             Assertions.assertEquals("Hello! I have the plans for the death star!", MESSAGES.poll(10, TimeUnit.SECONDS));
 
-            //C3p0 should not respond to the message
+            //C3p0 should respond to the message
             Assertions.assertEquals("I don't want to know about them! Hand them to Darth Vader!", MESSAGES.poll(10, TimeUnit.SECONDS));
         }
     }
 
+
+    @Test
+    void testMessaging_GreetingError() throws DeploymentException, IOException, InterruptedException {
+        wireMockResponse(500, "BAD REQUEST");
+        try (Session session = ContainerProvider.getWebSocketContainer().connectToServer(Client.class, uri)) {
+            Assertions.assertEquals("CONNECT", MESSAGES.poll(10, TimeUnit.SECONDS));
+            Assertions.assertEquals("Hello Leia. Unfortunately, my systems are reporting an error.", MESSAGES.poll(10, TimeUnit.SECONDS));
+        }
+    }
+
+    @Test
+    void testMessaging_MessageError() throws DeploymentException, IOException, InterruptedException {
+        wireMockResponse("Hello Leia! I am C3P0, human-cyborg relations. I am fluent in over six million forms of communication.");
+
+        try (Session session = ContainerProvider.getWebSocketContainer().connectToServer(Client.class, uri)) {
+            Assertions.assertEquals("CONNECT", MESSAGES.poll(10, TimeUnit.SECONDS));
+            Assertions.assertEquals("Hello Leia! I am C3P0, human-cyborg relations. I am fluent in over six million forms of communication.", MESSAGES.poll(10, TimeUnit.SECONDS));
+
+            wireMockResponse(500, "BAD REQUEST");
+
+            session.getBasicRemote().sendText("Hello!");
+            Assertions.assertEquals("Hello!", MESSAGES.poll(10, TimeUnit.SECONDS));
+
+            //C3p0 should not respond to the message
+            Assertions.assertEquals("Unfortunately, my systems are reporting an error.", MESSAGES.poll(10, TimeUnit.SECONDS));
+        }
+    }
+
     private void wireMockResponse(String response) {
-        wireMock.register(post(urlEqualTo("/chat/completions?api-version=2023-05-15"))
-                .willReturn(aResponse().withStatus(200).withBody(STR."""
+        wireMockResponse(200, STR."""
                         {
                             "id":"chatcmpl-8xs4jWbWVv3iopXegymSQnnpwg6MH",
                             "object":"chat.completion",
@@ -72,7 +108,18 @@ class ChatWebSocketTest {
                                 "total_tokens":111
                             },
                             "system_fingerprint":"fp_68a7d165bf"
-                            }""")));
+                            }""");
+    }
+    private void wireMockResponse(int status, String body) {
+        wireMock.resetMappings();
+        wireMock.register(
+                post(urlEqualTo("/chat/completions?api-version=2023-05-15"))
+                .willReturn(
+                        aResponse()
+                                .withStatus(status)
+                                .withBody(body)
+                )
+        );
     }
 
     @ClientEndpoint
@@ -89,19 +136,8 @@ class ChatWebSocketTest {
         }
     }
 
-//    @ApplicationScoped
-//    public static class MockC3P0 implements C3P0 {
-//        @Override
-//        public String greet(Object session, String name) {
-//            return "Hello Leia! I am C3P0, human-cyborg relations. I am fluent in over six million forms of communication.";
-//        }
-//
-//        @Override
-//        public String interact(Object session, String message) {
-//            return switch (message) {
-//                case "Hello! I have the plans for the death star!" -> "I don't want to know about them! Hand them to Darth Vader!";
-//                default -> "I don't understand.";
-//            };
-//        }
-//    }
+    @AfterAll
+    static void afterAll() {
+        System.out.flush();
+    }
 }

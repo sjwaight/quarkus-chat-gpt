@@ -10,12 +10,15 @@ import jakarta.websocket.server.ServerEndpoint;
 import org.eclipse.microprofile.context.ManagedExecutor;
 
 import java.io.IOException;
+import org.jboss.logging.Logger;
 
 import static java.lang.StringTemplate.STR;
 
 @ServerEndpoint("/chat/{name}/")
 @ApplicationScoped
 public class ChatWebSocket {
+    private static final Logger log = Logger.getLogger(ChatWebSocket.class);
+
     private final C3P0 c3p0;
     private final ManagedExecutor managedExecutor;
 
@@ -27,40 +30,44 @@ public class ChatWebSocket {
 
     @OnOpen
     public void onOpen(Session session, @PathParam("name") String name) {
-        System.out.println(STR."onOpen> name: \{name}");
+        log.info(STR."onOpen (\{name})>");
         managedExecutor.execute(() -> {
             try {
                 String response = c3p0.greet(session, name);
-                System.out.println(STR."Response> \{response}");
+                log.info(STR."Response (\{name})> \{response}");
                 session.getBasicRemote().sendText(response);
-            } catch (IOException e) {
-                e.printStackTrace();
+            } catch (Exception e) {
+                respondToError(session, e, name, STR."Hello \{name}. Unfortunately, my systems are reporting an error.");
             }
         });
     }
 
     @OnClose
     public void onClose(Session session, @PathParam("name") String name) {
-        System.out.println(STR."onClose> name: \{name}");
+        log.info(STR."onClose (\{name})>");
         ChatMemoryRemover.remove(c3p0, session);
-    }
-
-    @OnError
-    public void onError(Session session, Throwable throwable) {
-        System.out.println("onError> " + ": " + throwable);
     }
 
     @OnMessage
     public void onMessage(Session session, @PathParam("name") String name, String message) {
-        System.out.println(STR."onMessage> name: \{name}, message: \{message}");
+        log.info(STR."onMessage (\{name})> message: \{message}");
         managedExecutor.execute(() -> {
             try {
                 session.getBasicRemote().sendText(message);
                 String response = c3p0.interact(session, message);
+                System.out.println(STR."Response (\{name})> \{response}");
                 session.getBasicRemote().sendText(response);
-            } catch (IOException e) {
-                e.printStackTrace();
+            } catch (Exception e) {
+                respondToError(session, e, name, "Unfortunately, my systems are reporting an error.");
             }
         });
+    }
+
+    private static void respondToError(Session session, Exception e, String name, String errorResponse) {
+        log.error(STR."Error (\{name})> \{errorResponse}");
+        log.error("LangChain Error.", e);
+        try {
+            session.getBasicRemote().sendText(errorResponse);
+        } catch (IOException ex) {/*ignore*/}
     }
 }
