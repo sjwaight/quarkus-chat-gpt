@@ -15,20 +15,23 @@ import static java.lang.StringTemplate.STR;
 
 @ServerEndpoint("/chat/{name}/")
 @ApplicationScoped
-public class StartWebSocket {
+public class ChatWebSocket {
+    private final C3P0 c3p0;
+    private final ManagedExecutor managedExecutor;
 
     @Inject
-    C3P0 c3p0;
-
-    @Inject
-    ManagedExecutor managedExecutor;
+    public ChatWebSocket(C3P0 c3p0, ManagedExecutor managedExecutor) {
+        this.c3p0 = c3p0;
+        this.managedExecutor = managedExecutor;
+    }
 
     @OnOpen
     public void onOpen(Session session, @PathParam("name") String name) {
-        System.out.println(STR."onOpen> \{name}");
+        System.out.println(STR."onOpen> name: \{name}");
         managedExecutor.execute(() -> {
             try {
                 String response = c3p0.greet(session, name);
+                System.out.println(STR."Response> \{response}");
                 session.getBasicRemote().sendText(response);
             } catch (IOException e) {
                 e.printStackTrace();
@@ -38,7 +41,7 @@ public class StartWebSocket {
 
     @OnClose
     public void onClose(Session session, @PathParam("name") String name) {
-        System.out.println("onClose> " + name);
+        System.out.println(STR."onClose> name: \{name}");
         ChatMemoryRemover.remove(c3p0, session);
     }
 
@@ -48,7 +51,8 @@ public class StartWebSocket {
     }
 
     @OnMessage
-    public void onMessage(Session session, String message) throws IOException {
+    public void onMessage(Session session, @PathParam("name") String name, String message) {
+        System.out.println(STR."onMessage> name: \{name}, message: \{message}");
         managedExecutor.execute(() -> {
             try {
                 session.getBasicRemote().sendText(message);
