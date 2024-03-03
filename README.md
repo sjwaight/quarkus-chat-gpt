@@ -2,17 +2,17 @@
 
 ### Libraries we'll use
 
-LangChain4J
-https://docs.langchain4j.dev/intro
+#### LangChain4J
+https://docs.langchain4j.dev/intro  
 Java client for OpenAI's and other language models. Also supports other APIs for language processing like vector search and document parsing.
 
-Quarkus
-https://quarkus.io/
+#### Quarkus
+https://quarkus.io/  
 Awesome fast and lightweight Java framework for building cloud-native apps.
 
-Quarkus LangChain4J Extension (Azure)
-https://quarkus.io/blog/quarkus-meets-langchain4j/
-Integrates LangChain4J with Quarkus, simplifying injection and configuration.
+#### Quarkus LangChain4J Extension (Azure)
+https://quarkus.io/blog/quarkus-meets-langchain4j/  
+Integrates LangChain4J with Quarkus, simplifying injection and configuration.  
 
 It's worth noting this is just one set of libraries, and you don't need any specific library - at the end of the day you're just making HTTP requests to an API.
 
