@@ -1,6 +1,23 @@
 # Demo Steps
 
-### Show the API we'll be working with indirectly through Quarkus' Extension
+### Libraries we'll use
+
+LangChain4J
+https://docs.langchain4j.dev/intro
+Java client for OpenAI's and other language models. Also supports other APIs for language processing like vector search and document parsing.
+
+Quarkus
+https://quarkus.io/
+Awesome fast and lightweight Java framework for building cloud-native apps.
+
+Quarkus LangChain4J Extension (Azure)
+https://quarkus.io/blog/quarkus-meets-langchain4j/
+Integrates LangChain4J with Quarkus, simplifying injection and configuration.
+
+It's worth noting this is just one set of libraries, and you don't need any specific library - at the end of the day you're just making HTTP requests to an API.
+
+
+### Call the API with cURL
 ```bash
 ./call-azure-api.sh
 ```
@@ -39,21 +56,31 @@ quarkus.langchain4j.azure-openai.api-key=${c3p0_api_key:77?????????????????}
 Add an interface for our C3P0 bot:
 ```java
 @RegisterAiService()
+@SystemMessage("You are C3P0, a protocol droid. You are fluent in over six million forms of communication.")
 public interface C3P0 {
-    @SystemMessage("You are C3P0, a protocol droid. You are fluent in over six million forms of communication.")
-    @UserMessage("Greet the user. You should introduce yourself and indicate your apprehension about what the user might do.")
-    String greet();
+    @UserMessage("Greet {name}.")
+    String greet(String name);
 }
 ```
 
 ### Inject and Consume the Bot
-Inject the bot and consume it:
+Inject the bot and consume it in the REST endpoint:
 ```java
 @Inject
 C3P0 c3p0;
 ...
-c3p0.greet();
+c3p0.greet("Human");
 ```
+Try it out!
+
+### Enable logging of requests
+```properties
+quarkus.langchain4j.azure-openai.log-requests=true
+quarkus.langchain4j.azure-openai.log-responses=true
+```
+http://localhost:8080/hello  
+The HTTP call being made by Quarkus is the same as we were made by hand through curl earlier.
+![img.png](img.png)
 
 ### Add a WebSocket Endpoint
 https://quarkus.io/guides/websockets
@@ -76,7 +103,26 @@ public class ChatWebSocketResource {
     public void onError(Session session, @PathParam("name") String name, Throwable throwable) {}
 
     @OnMessage
-    public void onMessage(String message, @PathParam("name") String name) {}
+    public void onMessage(Session session, String message, @PathParam("name") String name) {}
+}
+```
+
+### Hook up the sockets to the bot
+Add a name parameter to the greet method and send the response back to the client:
+```java
+@Inject
+C3P0 c3p0;
+@Inject
+ManagedExecutor managedExecutor;
+
+@OnOpen
+public void onOpen(Session session, @PathParam("name") String name) {
+    managedExecutor.runAsync(() -> {
+        String greeting = c3p0.greet(name);
+        try {
+            session.getBasicRemote().sendText(greeting);
+        } catch (IOException e) {}
+    });
 }
 ```
 
