@@ -50,6 +50,7 @@ Configure the Azure extension in the application.properties file:
 quarkus.langchain4j.azure-openai.resource-name=${c3p0_resource_name:c3po-demo-01}
 quarkus.langchain4j.azure-openai.deployment-name=${c3p0_deployment_id:gpt-4}
 quarkus.langchain4j.azure-openai.api-key=${c3p0_api_key:77?????????????????}
+quarkus.langchain4j.azure-openai.timeout=30s
 ```
 
 ### Implement a Bot
