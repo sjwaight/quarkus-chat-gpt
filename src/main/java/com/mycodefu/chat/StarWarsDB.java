@@ -25,7 +25,7 @@ public class StarWarsDB {
         Bson query = regex("name", compile(STR.".*\{name}.*", Pattern.CASE_INSENSITIVE));
         Log.info(STR."Querying MongoDB StarWars people: \{query}");
 
-        MongoCollection<Document> collection = mongoClient.getDatabase("StarWars").getCollection("peopleResolved");
+        MongoCollection<Document> collection = mongoClient.getDatabase("StarWars").getCollection("people");
         Document person = collection.find(query).first();
         String personData = person != null ? person.toJson() : null;
 

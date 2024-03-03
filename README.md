@@ -126,6 +126,54 @@ public void onOpen(Session session, @PathParam("name") String name) {
 }
 ```
 
+### Adding a Tool to Query MongoDB
+I've downloaded some data from StarWars API (an excellent source for data to play with) and imported it into a MongoDB instance. We can use the Quarkus MongoDB client to query this data.
+```bash
+quarkus add ext mongodb-client
+```
+Create a Java class to query the MongoDB instance, which Quarkus will automatically inject into the chat context for us as a function:
+```java
+@ApplicationScoped
+public class StarWarsDB {
+
+    @Inject
+    MongoClient mongoClient;
+
+    @Tool("Get details about a person from the star wars world.")
+    public String getCharacterInfo(String name) {
+        Bson query = regex("name", compile(STR.".*\{name}.*", Pattern.CASE_INSENSITIVE));
+        Log.info(STR."Querying MongoDB StarWars people: \{query}");
+
+        MongoCollection<Document> collection = mongoClient.getDatabase("StarWars").getCollection("people");
+        Document person = collection.find(query).first();
+        String personData = person != null ? person.toJson() : null;
+
+        Log.info(STR."Found person: \{personData}");
+        return personData;
+    }
+}
+```
+
+Run a local MongoDB and import the data into it:
+```bash
+docker run -d --name c3p0-mongodb -p 27017:27017 -v "$(pwd)/people.json:/data/db/people.json" mongo:7
+docker exec c3p0-mongodb mongoimport --uri mongodb://localhost:27017/StarWars --collection people --file /data/db/people.json
+```
+
+And add it as a tool to the C3P0 bot:
+```java
+@RegisterAiService(
+    tools = {
+        StarWarsDB.class
+    }
+)
+@SystemMessage("You are C3P0, a protocol droid. You are fluent in over six million forms of communication.")
+public interface C3P0 {
+    @UserMessage("Greet {name}.")
+    String greet(String name);
+    String chat(String content);
+}
+```
 
 ### Logging
 https://quarkus.io/guides/logging
@@ -165,3 +213,10 @@ Modify the maven pom.xml to allow the nice new preview features in Java 21:
   </plugin>
 </plugins>
 ```
+
+### Nice little extra: Quarkus Dev Services MongoDB Version
+If you're testing a solution with Quarkus and MongoDB, it uses test containers to spin up a test mongo instance for you. Very convenient. You might want to control the version of MongoDB you're using, so you can do that by setting the:
+```properties
+quarkus.mongodb.devservices.image-name=mongo:7
+```
+(solution provided by ChatGPT - https://chat.openai.com/share/3709362a-89fd-4e01-9e02-bf1c4205bb75)
