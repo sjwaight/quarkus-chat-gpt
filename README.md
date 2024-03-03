@@ -1,5 +1,10 @@
 # Demo Steps
 
+### Show the API we'll be working with indirectly through Quarkus' Extension
+```bash
+./call-azure-api.sh
+```
+
 ### Create a new project
 https://quarkus.io/guides/cli-tooling#project-creation
 ```
