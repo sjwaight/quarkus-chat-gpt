@@ -1,67 +1,116 @@
-# quarkus-chat-gpt
+# Demo Steps
 
-This project uses Quarkus, the Supersonic Subatomic Java Framework.
+### Create a new project
+https://quarkus.io/guides/cli-tooling#project-creation
+```
+quarkus create app quarkus-chat-demo
+```
+By default you'll get a nice little template app with a REST endpoint.
 
-If you want to learn more about Quarkus, please visit its website: https://quarkus.io/ .
+### Running the application in dev mode
+https://quarkus.io/guides/cli-tooling#development-mode
+```
+quarkus dev
+```
+This dev mode will automatically reload the app when you make changes to the code.
+You can attach a debugger to the app using a remote JVM debugger or using one of 
+the Quarkus plugins.
 
-## Running the application in dev mode
-
-You can run your application in dev mode that enables live coding using:
-```shell script
-./mvnw compile quarkus:dev
+### Add LangChain4J Azure Extension
+https://docs.quarkiverse.io/quarkus-langchain4j/dev/index.html  
+Add the extension for langchain4j azure:
+```
+quarkus add ext quarkus-langchain4j-azure-openai 
 ```
 
-> **_NOTE:_**  Quarkus now ships with a Dev UI, which is available in dev mode only at http://localhost:8080/q/dev/.
-
-## Packaging and running the application
-
-The application can be packaged using:
-```shell script
-./mvnw package
+Configure the Azure extension in the application.properties file:
 ```
-It produces the `quarkus-run.jar` file in the `target/quarkus-app/` directory.
-Be aware that it’s not an _über-jar_ as the dependencies are copied into the `target/quarkus-app/lib/` directory.
-
-The application is now runnable using `java -jar target/quarkus-app/quarkus-run.jar`.
-
-If you want to build an _über-jar_, execute the following command:
-```shell script
-./mvnw package -Dquarkus.package.type=uber-jar
+quarkus.langchain4j.azure-openai.resource-name=${c3p0_resource_name:c3po-demo-01}
+quarkus.langchain4j.azure-openai.deployment-name=${c3p0_deployment_id:gpt-4}
+quarkus.langchain4j.azure-openai.api-key=${c3p0_api_key:77?????????????????}
 ```
 
-The application, packaged as an _über-jar_, is now runnable using `java -jar target/*-runner.jar`.
-
-## Creating a native executable
-
-You can create a native executable using: 
-```shell script
-./mvnw package -Dnative
+### Implement a Bot
+Add an interface for our C3P0 bot:
+```java
+@RegisterAiService()
+public interface C3P0 {
+    @SystemMessage("You are C3P0, a protocol droid. You are fluent in over six million forms of communication.")
+    @UserMessage("Greet the user. You should introduce yourself and indicate your apprehension about what the user might do.")
+    String greet();
+}
 ```
 
-Or, if you don't have GraalVM installed, you can run the native executable build in a container using: 
-```shell script
-./mvnw package -Dnative -Dquarkus.native.container-build=true
+### Inject and Consume the Bot
+Inject the bot and consume it:
+```java
+@Inject
+C3P0 c3p0;
+...
+c3p0.greet();
 ```
 
-You can then execute your native executable with: `./target/quarkus-chat-gpt-1.0.0-SNAPSHOT-runner`
+### Add a WebSocket Endpoint
+https://quarkus.io/guides/websockets
+Add a WebSocket endpoint:
+```
+quarkus ext add websockets
+```
 
-If you want to learn more about building native executables, please consult https://quarkus.io/guides/maven-tooling.
+```java
+@ServerEndpoint("/chat/{name}")
+@ApplicationScoped
+public class ChatWebSocketResource {
+    @OnOpen
+    public void onOpen(Session session, @PathParam("name") String name) {}
 
-## Related Guides
+    @OnClose
+    public void onClose(Session session, @PathParam("name") String name) {}
 
-- WebSockets Client ([guide](https://quarkus.io/guides/websockets)): Client for WebSocket communication channel
-- WebSockets ([guide](https://quarkus.io/guides/websockets)): WebSocket communication channel support
+    @OnError
+    public void onError(Session session, @PathParam("name") String name, Throwable throwable) {}
 
-## Provided Code
+    @OnMessage
+    public void onMessage(String message, @PathParam("name") String name) {}
+}
+```
 
-### RESTEasy Reactive Qute
 
-Create your web page using Quarkus RESTEasy Reactive & Qute
+### Logging
+https://quarkus.io/guides/logging
+Use JBoss logging package automatically gives you nice logging out of the box.
 
-[Related guide section...](https://quarkus.io/guides/qute#type-safe-templates)
+```
+private static final Logger log = Logger.getLogger(ChatWebSocket.class);
+...
+log.info("ChatWebSocket.onOpen");
+```
 
-### WebSockets
 
-WebSocket communication channel starter code
-
-[Related guide section...](https://quarkus.io/guides/websockets)
+### Enabling Preview on Java 21 (for fun and profit)
+Modify the maven pom.xml to allow the nice new preview features in Java 21:
+```xml
+<plugins>
+  <plugin>
+    <artifactId>maven-compiler-plugin</artifactId>
+    <version>${compiler-plugin.version}</version>
+    <configuration>
+      <compilerArgs>
+        <arg>-parameters</arg>
+        <arg>--enable-preview</arg>
+      </compilerArgs>
+    </configuration>
+  </plugin>
+  <plugin>
+    <artifactId>maven-surefire-plugin</artifactId>
+    <version>${surefire-plugin.version}</version>
+    <configuration>
+      <systemPropertyVariables>
+        <java.util.logging.manager>org.jboss.logmanager.LogManager</java.util.logging.manager>
+        <maven.home>${maven.home}</maven.home>
+      </systemPropertyVariables>
+      <argLine>--enable-preview</argLine>
+    </configuration>
+  </plugin>
+</plugins>
+```
