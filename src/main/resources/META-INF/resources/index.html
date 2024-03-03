@@ -45,10 +45,10 @@
 
 <body>
 <div id="place-app"></div>
-<script src="https://unpkg.com/babel-standalone@6/babel.min.js"></script>
-<script src="https://unpkg.com/react@16/umd/react.development.js" crossorigin></script>
-<script src="https://unpkg.com/react-dom@16/umd/react-dom.development.js" crossorigin></script>
-<script src="https://unpkg.com/@mui/material@5.3.1/umd/material-ui.development.js" crossorigin></script>
+<script src="https://unpkg.com/babel-standalone@6.26.0/babel.min.js"></script>
+<script src="https://unpkg.com/react@18.2.0/umd/react.development.js" crossorigin></script>
+<script src="https://unpkg.com/react-dom@18.2.0/umd/react-dom.development.js" crossorigin></script>
+<script src="https://unpkg.com/@mui/material@5.15.11/umd/material-ui.development.js" crossorigin></script>
 <script type="text/babel">
     function ChatBubble(props) {
         return (
@@ -124,8 +124,10 @@
                 </MaterialUI.Paper>
                 <div className="chat-input">
                     <MaterialUI.TextField
+                        name={"chat-c3p0-message"}
                         disabled={!socketConnected}
                         variant="standard"
+                        autocomplete="off"
                         sx={{flexGrow: 1}}
                         placeholder="Enter your message here"
                             /*On enter call the send function*/
