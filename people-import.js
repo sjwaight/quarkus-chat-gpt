@@ -1,23 +1,26 @@
 const axios=require("axios");
 
 db = db.getSiblingDB('StarWars')
-let people = db.getCollection('people')
-people.deleteMany({})
 
-let hasNext = true;
-let url = 'https://swapi.dev/api/people'
-while(hasNext){
-    console.log(`Loading people from ${url} ...`)
-    let rst=await (axios.get(url));
-    if (rst.data.next) {
-        hasNext = true;
-        url = rst.data.next;
-    } else {
-        hasNext = false;
+for (let resource of ["planets", "starships", "vehicles", "people", "films", "species"]) {
+    let resourceCollection = db.getCollection(resource)
+    resourceCollection.deleteMany({})
+
+    let hasNext = true;
+    let url = `https://swapi.dev/api/${resource}`
+    while(hasNext){
+        console.log(`Loading ${resource} from ${url} ...`)
+        let rst=await (axios.get(url));
+        if (rst.data.next) {
+            hasNext = true;
+            url = rst.data.next;
+        } else {
+            hasNext = false;
+        }
+        let data = rst.data.results;
+        resourceCollection.insertMany(data)
+        console.log(`Inserted ${data.length} ${resource}...`)
     }
-    let peopleData = rst.data.results;
-    people.insertMany(peopleData)
-    console.log(`Inserted ${peopleData.length} people...`)
-}
 
-console.log(`Finished with ${people.estimatedDocumentCount()} people.`)
+    console.log(`Finished with ${resourceCollection.estimatedDocumentCount()} ${resource}.`)
+}
