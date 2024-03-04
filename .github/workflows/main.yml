@@ -1,4 +1,3 @@
-on: [push]
 name: OIDC build and deploy container
 
 permissions:
@@ -16,7 +15,7 @@ jobs:
         runs-on: ubuntu-latest
         steps:
         - name: 'Checkout GitHub Action'
-          uses: actions/checkout@main
+          uses: actions/checkout@v3
 
         - name: 'Login via Azure CLI'
           uses: azure/login@v1
