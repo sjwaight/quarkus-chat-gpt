@@ -1,5 +1,5 @@
 on: [push]
-name: Linux_Container_Workflow_OIDC
+name: OIDC build and deploy container
 
 permissions:
   id-token: write
