@@ -25,9 +25,8 @@ jobs:
             username: ${{ secrets.REGISTRY_USERNAME }}
             password: ${{ secrets.REGISTRY_PASSWORD }}
         - run: |
-            docker build Dockerfile.jvm -t ${{ secrets.REGISTRY_LOGIN_SERVER }}/c3pochat:${{ github.sha }}
+            docker build -f src/main/docker/Dockerfile.jvm  -t ${{ secrets.REGISTRY_LOGIN_SERVER }}/c3pochat:${{ github.sha }}
             docker push ${{ secrets.REGISTRY_LOGIN_SERVER }}/c3pochat:${{ github.sha }}
-          working-directory: src/main/docker
 
         - name: 'Deploy to Azure Container Instances'
           uses: 'azure/aci-deploy@v1'
