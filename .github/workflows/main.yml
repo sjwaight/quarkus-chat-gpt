@@ -1,6 +1,8 @@
 name: Build and deploy container
 
 on:
+  workflow_dispatch:
+  
   push:
     branches:
     - main
