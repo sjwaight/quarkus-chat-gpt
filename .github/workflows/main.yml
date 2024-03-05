@@ -48,6 +48,6 @@ jobs:
             registry-login-server: ${{ secrets.REGISTRY_LOGIN_SERVER }}
             registry-username: ${{ secrets.REGISTRY_USERNAME }}
             registry-password: ${{ secrets.REGISTRY_PASSWORD }}
-            secure-environment-variables: c3p0_api_key=${{ secrets.OPENAI_KEY }} c3p0_mongodb_connection_string=${{ secrets.c3p0_mongodb_connection_string }}
+            secure-environment-variables: QUARKUS_LANGCHAIN4J_AZURE-OPENAI_API-KEY=${{ secrets.OPENAI_KEY }} PROD_QUARKUS_MONGODB_CONNECTION-STRING=${{ secrets.c3p0_mongodb_connection_string }}
             name: aci-c3pochat
             location: 'west us'
