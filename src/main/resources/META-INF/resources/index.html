@@ -73,7 +73,7 @@
 
         React.useEffect(() => {
             if (!socketConnected && name) {
-                const webSocket = new WebSocket(`ws://localhost:8080/chat/${name}/`);
+                const webSocket = new WebSocket(`ws://${window.location.hostname}:8080/chat/${name}/`);
                 webSocket.onopen = () => {
                     setSocketConnected(true);
                     setSocket(webSocket);
